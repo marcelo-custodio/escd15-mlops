@@ -56,7 +56,7 @@ def split_and_clean(X, y):
     )
 
     # escalando score min:max >> -10:10
-    mms = MinMaxScaler(feature_range=(-5, 5))
+    mms = MinMaxScaler(feature_range=(-10, 10))
     mms.fit(X_train[['CreditScore']])
     X_train['CreditScore'], X_test['CreditScore'] = (
         mms.transform(X_train[['CreditScore']]),

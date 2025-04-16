@@ -2,3 +2,5 @@ pandas
 mlflow
 evidently
 scikit-learn
+fastapi[standard]
+uvicorn
