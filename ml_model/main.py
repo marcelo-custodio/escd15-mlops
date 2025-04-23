@@ -5,6 +5,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import f1_score
 import mlflow
 import mlflow.sklearn
+from mlflow.models.signature import infer_signature
 
 def start_mlflow():
     mlflow.set_tracking_uri("sqlite:///../mlflow.db")
@@ -22,7 +23,15 @@ def train_test_knn(X_train, X_test, y_train, y_test):
         score = f1_score(y_test, y_pred)
         mlflow.log_metric("f1", score)
 
-        mlflow.sklearn.log_model(model, "knn")
+        signature = infer_signature(X_train, y_pred)
+
+        mlflow.sklearn.log_model(
+            model,
+            "knn",
+            signature=signature,
+            input_example=X_train,
+            registered_model_name="KNeighborsClassifier"
+        )
         print(f"Modelo KNN registrado no MLflow! Run ID: {run.info.run_id}")
 
 def train_test_rndf(X_train, X_test, y_train, y_test):
@@ -36,7 +45,15 @@ def train_test_rndf(X_train, X_test, y_train, y_test):
         score = f1_score(y_test, y_pred)
         mlflow.log_metric("f1", score)
 
-        mlflow.sklearn.log_model(model, "random_forest")
+        signature = infer_signature(X_train, y_pred)
+
+        mlflow.sklearn.log_model(
+            model,
+            "random_forest",
+            signature=signature,
+            input_example=X_train,
+            registered_model_name="RandomForestClassifier"
+        )
         print(f"Modelo Random Forest registrado no MLflow! Run ID: {run.info.run_id}")
 
 def main():
