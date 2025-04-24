@@ -9,9 +9,11 @@ import mlflow.sklearn
 from mlflow.models.signature import infer_signature
 
 def start_mlflow():
-    mlflow.set_tracking_uri("sqlite:///../mlflow.db")
+    uri = "sqlite:///../mlflow.db"
+    mlflow.set_tracking_uri(uri)
     mlflow.set_experiment("customerchurn")
-    return
+
+    return mlflow.tracking.MlflowClient(tracking_uri=uri)
 
 def train_test_knn(X_train, X_test, y_train, y_test):
     param_grid = ParameterGrid({
@@ -69,15 +71,44 @@ def train_test_rndf(X_train, X_test, y_train, y_test):
             )
             print(f"Modelo RNDF registrado no MLflow! Run ID: {run.info.run_id}")
 
+def promote_model(client):
+    best_model = None
+    best_f1_score = 0
+
+    models = client.search_registered_models()
+    for model in models:
+        model_name = model.name
+        versions = client.search_model_versions(f"name='{model_name}'")
+        for version in versions:
+            run_id = version.run_id
+            metrics = client.get_run(run_id).data.metrics
+            score = metrics.get('f1', 0)
+
+            if score > best_f1_score:
+                best_f1_score = score
+                best_model = (model_name, version.version)
+
+    if best_model is not None:
+        client.transition_model_version_stage(
+            name=best_model[0],
+            version=best_model[1],
+            stage="production",
+            archive_existing_versions=True
+        )
+    return best_f1_score
+
 def main():
     df = get_dataset()
     y = df[target_column]
     X = df.drop(columns=[target_column])
     X_train, X_test, y_train, y_test = split_and_clean(X, y)
 
-    start_mlflow()
+    client = start_mlflow()
     train_test_knn(X_train, X_test, y_train, y_test)
     train_test_rndf(X_train, X_test, y_train, y_test)
+
+    score = promote_model(client)
+    print(f"Melhor score obtido: {score}")
 
 if __name__ == "__main__":
     main()
