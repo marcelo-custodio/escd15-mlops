@@ -39,7 +39,7 @@ def train_test_knn(X_train, X_test, y_train, y_test):
                 "knn",
                 signature=signature,
                 input_example=X_train,
-                registered_model_name="KNeighborsClassifier"
+                registered_model_name="churn_classifier"
             )
             print(f"Modelo KNN registrado no MLflow! Run ID: {run.info.run_id}")
 
@@ -67,7 +67,7 @@ def train_test_rndf(X_train, X_test, y_train, y_test):
                 "rndf",
                 signature=signature,
                 input_example=X_train,
-                registered_model_name="RandomForestClassifier"
+                registered_model_name="churn_classifier"
             )
             print(f"Modelo RNDF registrado no MLflow! Run ID: {run.info.run_id}")
 
@@ -75,23 +75,21 @@ def promote_model(client):
     best_model = None
     best_f1_score = 0
 
-    models = client.search_registered_models()
-    for model in models:
-        model_name = model.name
-        versions = client.search_model_versions(f"name='{model_name}'")
-        for version in versions:
-            run_id = version.run_id
-            metrics = client.get_run(run_id).data.metrics
-            score = metrics.get('f1', 0)
+    model_name = "churn_classifier"
+    versions = client.search_model_versions(f"name='{model_name}'")
+    for version in versions:
+        run_id = version.run_id
+        metrics = client.get_run(run_id).data.metrics
+        score = metrics.get('f1', 0)
 
-            if score > best_f1_score:
-                best_f1_score = score
-                best_model = (model_name, version.version)
+        if score > best_f1_score:
+            best_f1_score = score
+            best_model = version.version
 
     if best_model is not None:
         client.transition_model_version_stage(
-            name=best_model[0],
-            version=best_model[1],
+            name=model_name,
+            version=best_model,
             stage="production",
             archive_existing_versions=True
         )
