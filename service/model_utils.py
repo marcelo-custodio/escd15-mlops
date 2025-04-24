@@ -1,8 +1,8 @@
+import pickle
+
 import mlflow
 import mlflow.pyfunc
-from pydantic import BaseModel, create_model
-from typing import Any
-from parameters import model_name, mapping_types
+from parameters import model_name
 
 def start_mlflow():
     uri = "sqlite:///../mlflow.db"
@@ -21,22 +21,46 @@ def search_model(client):
 
     return f"models:/{model_name}/{model[0].version}"
 
-def generate_pydantic_from_mlflow_model(model) -> BaseModel:
-    inputs = model.metadata.signature.inputs
-    fields = {}
-
-    for col in inputs.inputs:
-        name = col.name
-        dtype = col.type
-        py_type = mapping_types.get(str(dtype.name).lower(), Any)
-        fields[name] = (py_type, ...)
-
-    PydanticInputModel = create_model("ModelInput", **fields)
-    return PydanticInputModel
-
 def load_model():
     client = start_mlflow()
     model_uri = search_model(client)
     model = mlflow.pyfunc.load_model(model_uri)
-    input_class = generate_pydantic_from_mlflow_model(model)
-    return model, input_class
+    return model
+
+def load_pipelline():
+    with open('../pipeline.pickle', 'rb') as file:
+        pipeline = pickle.load(file)
+    return pipeline
+
+def apply_pipeline(pipeline, sample):
+    result = {}
+    for k,v in sample.items():
+        func = pipeline.get(k, None)
+        if func is None:
+            result[k] = v
+            continue
+
+        if func['t'] == 'constant':
+            result[k] = func['v'] * v
+        elif func['t'] == 'sklearn':
+            result[k] = func['v'].transform([[v]]).flat[0]
+        else:
+            result[k] = v
+    return result
+
+if __name__ == "__main__":
+    pipe = load_pipelline()
+    teste = {
+        'Age': 25,
+        'Balance': 0.0,
+        'CreditScore': 600,
+        'EstimatedSalary': 1800,
+        'Gender': 'female',
+        'Geography': 'france',
+        'HasCrCard': 1,
+        'IsActiveMember': 1,
+        'NumOfProducts': 2,
+        'Tenure': 2
+    }
+    res = apply_pipeline(pipe, teste)
+    print()

@@ -1,11 +1,14 @@
 model_name = "churn_classifier"
 
-mapping_types = {
-    "integer": int,
-    "long": int,
-    "float": float,
-    "double": float,
-    "boolean": bool,
-    "string": str,
-    "binary": bytes
+input_fields = {
+    'CreditScore': int,
+    'Geography': str,
+    'Gender': str,
+    'Age': int,
+    'Tenure': int,
+    'Balance': float,
+    'NumOfProducts': int,
+    'HasCrCard': int,
+    'IsActiveMember': int,
+    'EstimatedSalary': float
 }
