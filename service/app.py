@@ -7,14 +7,7 @@ from model_utils import load_model
 app = FastAPI(title="MLflow Model API")
 
 # Carrega o modelo uma vez ao iniciar o app
-model = load_model()
-
-# Define os dados de entrada (ajuste de acordo com seu modelo)
-class InputData(BaseModel):
-    feature1: float
-    feature2: float
-    feature3: float
-    # ...adicione outros campos
+model, InputData = load_model()
 
 @app.get("/")
 def root():
