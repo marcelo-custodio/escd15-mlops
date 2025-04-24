@@ -13,3 +13,5 @@ columns_to_consider = {
 }
 
 target_column = 'Exited'
+
+model_name = "churn_classifier"

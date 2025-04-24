@@ -1,5 +1,5 @@
 from ml_model.preprocessing import get_dataset, split_and_clean
-from parameters import target_column
+from parameters import target_column, model_name
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import ParameterGrid
@@ -39,7 +39,7 @@ def train_test_knn(X_train, X_test, y_train, y_test):
                 "knn",
                 signature=signature,
                 input_example=X_train,
-                registered_model_name="churn_classifier"
+                registered_model_name=model_name
             )
             print(f"Modelo KNN registrado no MLflow! Run ID: {run.info.run_id}")
 
@@ -67,7 +67,7 @@ def train_test_rndf(X_train, X_test, y_train, y_test):
                 "rndf",
                 signature=signature,
                 input_example=X_train,
-                registered_model_name="churn_classifier"
+                registered_model_name=model_name
             )
             print(f"Modelo RNDF registrado no MLflow! Run ID: {run.info.run_id}")
 
@@ -75,7 +75,6 @@ def promote_model(client):
     best_model = None
     best_f1_score = 0
 
-    model_name = "churn_classifier"
     versions = client.search_model_versions(f"name='{model_name}'")
     for version in versions:
         run_id = version.run_id
