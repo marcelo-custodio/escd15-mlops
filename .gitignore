@@ -1,2 +1,5 @@
 .idea/
-ml_model/mlruns/
+*/mlruns/
+mlruns/
+mlflow.db
+pipeline.pickle

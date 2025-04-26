@@ -1,5 +1,5 @@
 from ml_model.preprocessing import get_dataset, split_and_clean
-from parameters import target_column, model_name
+from ml_model.parameters import target_column, model_name
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import ParameterGrid
@@ -7,13 +7,7 @@ from sklearn.metrics import f1_score
 import mlflow
 import mlflow.sklearn
 from mlflow.models.signature import infer_signature
-
-def start_mlflow():
-    uri = "sqlite:///../mlflow.db"
-    mlflow.set_tracking_uri(uri)
-    mlflow.set_experiment("customerchurn")
-
-    return mlflow.tracking.MlflowClient(tracking_uri=uri)
+from ml_model.model_utils import start_mlflow
 
 def train_test_knn(X_train, X_test, y_train, y_test):
     param_grid = ParameterGrid({
@@ -92,7 +86,7 @@ def promote_model(client):
             stage="production",
             archive_existing_versions=True
         )
-    return best_f1_score
+    return best_f1_score, f"{model_name}.{best_model}"
 
 def main():
     df = get_dataset()
@@ -104,8 +98,9 @@ def main():
     train_test_knn(X_train, X_test, y_train, y_test)
     train_test_rndf(X_train, X_test, y_train, y_test)
 
-    score = promote_model(client)
+    score, best_model = promote_model(client)
     print(f"Melhor score obtido: {score}")
+    return score, best_model
 
 if __name__ == "__main__":
     main()

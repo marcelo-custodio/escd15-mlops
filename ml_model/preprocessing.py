@@ -1,12 +1,12 @@
 import pandas as pd
-from parameters import columns_to_consider, target_column
+from ml_model.parameters import columns_to_consider, target_column
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, RobustScaler, MinMaxScaler, StandardScaler
 import pickle
 
 def get_dataset():
     # lendo dataset
-    df = pd.read_csv('churn.csv')
+    df = pd.read_csv('ml_model/churn.csv')
 
     # filtrando as colunas a serem utilizadas
     _columns = [column for column in df.columns if column in columns_to_consider.keys()]
@@ -85,7 +85,7 @@ def split_and_clean(X, y):
         res.transform(X_test[['EstimatedSalary']])
     )
 
-    with open('../pipeline.pickle', 'wb') as file:
+    with open('pipeline.pickle', 'wb') as file:
         pickle.dump(pipeline, file)
 
     return X_train, X_test, y_train, y_test

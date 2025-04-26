@@ -12,6 +12,5 @@ columns_to_consider = {
     'Exited': int
 }
 
-target_column = 'Exited'
-
 model_name = "churn_classifier"
+target_column = 'Exited'

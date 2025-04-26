@@ -1,11 +1,10 @@
 import pickle
-
 import mlflow
 import mlflow.pyfunc
-from parameters import model_name
+from ml_model.parameters import model_name
 
 def start_mlflow():
-    uri = "sqlite:///../mlflow.db"
+    uri = "sqlite:///mlflow.db"
     mlflow.set_tracking_uri(uri)
     mlflow.set_experiment("customerchurn")
 
@@ -28,7 +27,7 @@ def load_model():
     return model
 
 def load_pipelline():
-    with open('../pipeline.pickle', 'rb') as file:
+    with open('pipeline.pickle', 'rb') as file:
         pipeline = pickle.load(file)
     return pipeline
 
