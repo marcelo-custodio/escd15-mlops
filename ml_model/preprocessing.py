@@ -12,6 +12,14 @@ def get_dataset():
     _columns = [column for column in df.columns if column in columns_to_consider.keys()]
     df = df[_columns]
 
+  # tratamento de valores ausentes
+    for column in df.columns:
+        if df[column].isnull().sum() > 0:
+            if df[column].dtype in ['float64', 'int64']:
+                df[column].fillna(df[column].median(), inplace=True)
+            else:
+                df[column].fillna(df[column].mode()[0], inplace=True)
+    
     # tratando as colunas
     for column in df.columns:
         # aplicando schema no csv
@@ -22,6 +30,7 @@ def get_dataset():
             df[column] = df[column].str.replace(r'[^a-zA-Z]', '', regex=True).str.lower()
             df[column] = df[column].apply(lambda x: None if str(x) == '' else str(x))
     df.dropna(inplace=True, ignore_index=True)
+    
     return df
 
 def split_and_clean(X, y):
