@@ -7,26 +7,44 @@ from evidently.presets import DataDriftPreset
 TRAIN_DATA_PATH = "ml_model/churn.csv"           # Dados de treino originais
 PROD_DATA_PATH = "ml_model/production_data.csv"  # Dados recentes simulando produção
 REPORT_OUTPUT = "drift_report.html"
+DRIFT_THRESHOLD = 0.3
+CHECK_INTERVAL = 1000
+DB_PATH = "requests.db"
 
 # Carregar os datasets
 df_train = pd.read_csv(TRAIN_DATA_PATH)
 df_prod = pd.read_csv(PROD_DATA_PATH)
 
-# Alinhar colunas se necessário (garante que estejam na mesma ordem)
-df_prod = df_prod[df_train.columns]
+def check_and_retrain():
+    conn = sqlite3.connect(DB_PATH)
+    df_inputs = pd.read_sql("SELECT * FROM inputs", conn)
+    conn.close()
 
-# Separar features e target
-TARGET_COLUMN = "Exited"
-ref_data = df_train.copy()
-prod_data = df_prod.copy()
+    if len(df_inputs) < CHECK_INTERVAL:
+        print(f"Aguardando mais requisições. Atual: {len(df_inputs)}/{CHECK_INTERVAL}")
+        return
 
-# Gerar relatório com Evidently
-report = Report(metrics=[
-    DataDriftPreset()
-])
+    df_original = pd.read_csv(TRAIN_DATA_PATH)
+    df_inputs = df_inputs[df_original.columns]
 
-eval = report.run(reference_data=ref_data, current_data=prod_data)
+    report = Report(metrics=[DataDriftPreset()])
+    report.run(reference_data=df_original, current_data=df_inputs)
+    report.save_html("ml_model/data_drift_report.html")
 
-# Salvar relatório
-eval.save_html(REPORT_OUTPUT)
-print(f"Relatório de monitoramento salvo em: {REPORT_OUTPUT}")
+    result = report.as_dict()
+    drifted = [f for f, v in result["metrics"][0]["result"]["features"].items() if v["drift_detected"]]
+    drift_ratio = len(drifted) / len(df_original.columns)
+
+    print(f"Data drift detectado em {drift_ratio:.2%} das features.")
+
+    if drift_ratio > DRIFT_THRESHOLD:
+        print("Data drift significativo. Re-treinando modelo.")
+        combined = pd.concat([df_original, df_inputs], ignore_index=True)
+        combined.to_csv(TRAIN_DATA_PATH, index=False)
+        df_inputs.to_csv(PROD_DATA_PATH , index=False)
+        subprocess.run(["python", "ml_model/main.py"])
+
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute("DELETE FROM inputs")
+        conn.commit()
+        conn.close()
