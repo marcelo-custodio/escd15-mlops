@@ -25,8 +25,8 @@ report = Report(metrics=[
     DataDriftPreset()
 ])
 
-report.run(reference_data=ref_data, current_data=prod_data)
+eval = report.run(reference_data=ref_data, current_data=prod_data)
 
 # Salvar relatório
-report.save_html(REPORT_OUTPUT)
+eval.save_html(REPORT_OUTPUT)
 print(f"Relatório de monitoramento salvo em: {REPORT_OUTPUT}")
