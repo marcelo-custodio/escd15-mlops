@@ -5,6 +5,8 @@ from ml_model.model_utils import load_model, load_pipelline, apply_pipeline
 from pydantic import create_model
 from ml_model.parameters import columns_to_consider, target_column
 from ml_model.main import main
+from api_logger import save_to_db
+from ml_model.monitoramento_drift import check_and_retrain
 
 app = FastAPI(title="MLflow Model API")
 
@@ -46,7 +48,9 @@ def predict(data: List[InputData]):
     if model.model is None or model.pipeline is None:
         main()
         model.reload()
-
+    else: 
+        save_to_db(data)               # 1. Salva input no banco
+        check_and_retrain()            # 2. Checa se há drift e re-treina
     # Converte lista de objetos para DataFrame
     df = pd.DataFrame([apply_pipeline(model.pipeline, d.dict()) for d in data])
     predictions = model.model.predict(df)
