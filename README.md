@@ -47,10 +47,28 @@ Utilizamos o dataset [Churn for Bank Customers](https://www.kaggle.com/datasets/
 - Requisições são armazenadas em banco SQLite (`requests.db`)
 - Script: `monitoring/api_logger.py`
 
----
+### 8. **Orquestração do MlFlow + Aplicação com Supervisor**
+- Retry automático caso MlFlow ou a Aplicação tenham algum problema
+- Disponibilização do Backend e interface de ambos em um único container
 
+---
 
 ### Instalar dependências
 
 ```bash
 pip install -r requirements.txt
+```
+
+### Execução Local
+
+Estar na pasta do projeto e executar os seguintes comandos no terminal:
+
+- MlFlow: ```mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000 --host 0.0.0.0```
+- API: ```uvicorn app:app --host 0.0.0.0 --port 8000```
+
+### Execução via Docker
+
+Estar na pasta do projeto e executar os seguintes comandos via terminal:
+
+- Build da Imagem: ```docker build . -t escd15-mlops```
+- Execução da aplicação em container: ```docker run -p 5000:5000 -p 8000:8000 escd15-mlops```
